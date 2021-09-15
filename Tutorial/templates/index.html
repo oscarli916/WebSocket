@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket</title>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="UTF-8">
+
+<!--        Create a socket variable and connect to the server-->
+<!--        io() already done the connection .connect is to specify the cconnection server-->
+<!--        var socket = io().connect("http://192.168.0.132:5000");-->
+        var socket = io();
+
+
+<!--        When connection is established, run the function-->
+        socket.on('connect', function() {
+            console.log("You are connected!");
+            socket.emit("id", socket.id);
+        });
+
+        socket.on('disconnect', function(){
+            console.log("Disconnected to server")
+        });
+
+        window.onbeforeunload = function(){
+            socket.emit("client-disconnecting", socket.id);
+        };
+
+
+
+<!--        Listen to server. When a msg is sent from server, run the function-->
+        socket.on('message', function(msg) {
+<!--            console.log("I received server message!");-->
+            var mssg = document.createElement("li")
+            mssg.innerHTML = msg
+            var allmsg = document.getElementById("messages");
+            allmsg.append(mssg);
+        });
+
+<!--        Onclick function-->
+        function ref(){
+
+            var sendmsg = document.getElementById("myMessage").value
+            socket.send(sendmsg)
+        }
+
+
+    </script>
+
+
+<ul id="messages"></ul>
+<input type="text" id="myMessage">
+<button id="refresh" onclick="ref()">Refresh</button>
+
+</body>
+</html>

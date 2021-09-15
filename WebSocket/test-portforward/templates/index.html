@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Odds</title>
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.ico')}}">
+    <style>
+
+    </style>
+</head>
+
+<body>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="UTF-8">
+
+        // Create socket variable and make connection to server
+        // var socket = io();
+        var socket = io.connect('http://124.244.19.36', {transports:['websocket']});
+
+
+        // Send client id to server
+        socket.on('connect', function(){
+            socket.emit('connect_id', socket.id);
+        });
+
+
+        // Close tab tell server remove id
+        window.onbeforeunload = function(){
+            socket.emit('client-disconnect', socket.id);
+        };
+
+        // Close tab tell server remove id (for ios safari)
+        window.onpagehide = function(){
+            socket.emit('client-disconnect', socket.id);
+        };
+
+
+        // Listen for event 'recommend'
+        socket.on('recommend', function(recommend){
+            var race = document.createElement("P");
+            race.innerHTML = "Race 1" + recommend[0];
+            var recom = document.createElement("P");
+            recom.innerHTML = recommend[1];
+            var aware = document.createElement("P");
+            aware.innerHTML = recommend[2];
+            document.body.append(race);
+            document.body.append(recom);
+            document.body.append(aware);
+
+
+
+        });
+
+         // Listen for event 'odd_table'
+        socket.on('odd_table', function(odd){
+
+            // Remove previous <table> if any
+            var table = document.getElementById('odds-table');
+            if (table){
+                table.parentNode.removeChild(table);
+            };
+
+            // Step1: Create 1 <table>
+            var table = document.createElement('table');
+            table.id = 'odds-table';
+            table.style.width = '100%'
+            table.cellSpacing = 0;  // No spacing between columns
+            table.style.fontFamily = 'arial';
+            table.style.textAlign = "center";
+
+
+            // Step2: Create <tr>; length = odd[0].length + 1
+            for(var i=0; i<=odd[0].length; i++){
+                var tr = document.createElement('tr');
+
+                    // Check if it is the first row
+                    if (i==0){
+                        // Set id
+                        tr.id = 'row-title';
+
+                        var title = ['馬號', '現', '3', '5', '10', '15', '20', '25', '30', '40', '昨'];
+                        for (var j=0; j<11; j++){
+                            var td = document.createElement('td');
+                            td.innerHTML = title[j];
+                            td.style.color = '#616161';
+                            tr.append(td);
+                        };
+                        tr.style.backgroundColor = '#e6e6e6';
+                        // tr.style.borderBottom = "thin solid #1a1a1a";
+
+
+                    } else{
+
+                        // Set id
+                        tr.id = 'row' + i;
+
+                        // Step3: Create <td> and assign values
+                        for(var j=0; j<11; j++){
+                            var td = document.createElement('td');
+
+                            if(odd[j][i-1] === undefined){
+                                td.innerHTML = ""
+                            } else{
+                                td.innerHTML = odd[j][i-1]
+                            };
+
+                            // Set id
+                            if (i%3 == 1){
+                                td.id = 'Win' + (j+1);
+                            } else if(i%3 ==2){
+                                td.id = 'Q' + (j+1);
+                            } else {
+                                td.id = 'P' + (j+1);
+                            };
+
+                            if (j==0){
+                                td.style.color = '#005a00';
+                                td.style.fontWeight= 'bold';
+                            } else if(j==1){
+                                td.style.fontWeight= 'bold';
+                            };
+
+                            if (j>0){
+                                td.style.border = "thin solid #8c8c8c";
+                            };
+
+                            tr.append(td);
+                        };
+                    };
+
+
+
+                table.append(tr);
+            };
+
+            var num = 100.0;
+            for (i=1; i<table.rows.length; i++){
+                if (['2.','4.','6.','8.','10.','12.','14.'].includes(table.childNodes[i].firstChild.innerHTML)){
+                    table.childNodes[i].style.backgroundColor = '#ececec';
+                    table.childNodes[i+1].style.backgroundColor = '#ececec';
+                    table.childNodes[i+2].style.backgroundColor = '#ececec';
+                };
+
+                if(i%3 == 1){
+                    // console.log(table.childNodes[i].childNodes[1].innerHTML);
+                    // num = Math.min(table.childNodes[i].childNodes[1].innerHTML, num);
+                    if (parseFloat(table.childNodes[i].childNodes[1].innerHTML) < num && parseFloat(table.childNodes[i].childNodes[1].innerHTML) != 0){
+                        num = table.childNodes[i].childNodes[1].innerHTML;
+                        var index = i
+                    };
+
+                };
+            };
+
+            table.childNodes[index].childNodes[1].style.backgroundColor = '#ff0000'
+
+            for (i=1; i<table.rows.length; i++) {
+                if (i%3 != 1){
+                    for (j=9; j>0; j--){
+                        if (table.childNodes[i].childNodes[j].innerHTML == ""){
+
+                        } else if (table.childNodes[i].childNodes[j].innerHTML != "" && parseFloat(table.childNodes[i].childNodes[j].innerHTML) - parseFloat(table.childNodes[i].childNodes[j+1].innerHTML) >= 0.1){
+                            table.childNodes[i].childNodes[j].style.backgroundColor = '#fbe679'
+                        };
+                        // console.log(table.childNodes[i].childNodes[j].innerHTML);
+                    };
+
+                };
+            };
+
+
+            //document.body.append(table);
+            document.body.insertBefore(table, race);
+
+        });
+
+    // Add recommendation and aware horse
+    var check = 0;
+    if (check == 0){
+        var race = document.createElement("P");
+        race.innerHTML = "Race ";
+        var recommend = document.createElement("P");
+        recommend.innerHTML = "推薦:";
+        var aware = document.createElement("P");
+        aware.innerHTML = "留意:";
+        document.body.append(race);
+        document.body.append(recommend);
+        document.body.append(aware);
+        check = 1;
+    };
+    </script>
+
+
+</body>
+</html>

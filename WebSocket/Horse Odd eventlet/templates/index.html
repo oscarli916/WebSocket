@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Odds</title>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="UTF-8">
+
+        // Create socket variable and make connection to server
+        // var socket = io();
+        var socket = io.connect('http://192.168.0.132:5000', {transports:['websocket']});
+
+
+        // Send client id to server
+        socket.on('connect', function(){
+            socket.emit('connect_id', socket.id);
+        });
+
+
+        // Close tab tell server remove id
+        window.onbeforeunload = function(){
+            socket.emit('client-disconnect', socket.id);
+        };
+
+
+        // Listen for event 'odd_table'
+        socket.on('odd_table', function(odd){
+
+            // Remove previous <table> if any
+            var table = document.getElementById('odds-table');
+            if (table){
+                table.parentNode.removeChild(table);
+            };
+
+            // Step1: Create 1 <table>
+            var table = document.createElement('table');
+            table.id = 'odds-table';
+
+            // Step2: Create <tr>; length = odd[0].length
+            for(var i=0; i<odd[0].length; i++){
+                var tr = document.createElement('tr');
+
+                    // Step3: Create <td> and assign values
+                    for(var j=0; j<odd.length; j++){
+                        var td = document.createElement('td');
+                        td.innerHTML = odd[j][i];
+                        tr.append(td);
+                    };
+
+                table.append(tr);
+            };
+
+
+            document.body.append(table);
+
+        });
+
+    </script>
+
+
+</body>
+</html>
